@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Thar be mines in them thar codes!</title>
+    </head>
+    <body>
+        <div id="MainMenu">
+            <button onclick="SelectDifficultyPreset('e')">Easy</button><br><br>
+            <button onclick="SelectDifficultyPreset('n')">Normal</button><br><br>
+            <button onclick="SelectDifficultyPreset('h')">Hard</button><br><br>
+            <button onclick="SelectDifficultyPreset('b')">Brutal</button><br><br>
+            <button onclick="SelectDifficultyPreset('i')">Insane</button><br><br>
+            <button onclick="SelectCustomMenu()">Custom</button>
+        </div>
+        <div id="GameBoard" hidden>
+            <p>Mines Left: <span id="MinesLeft"></span></p>
+            <p>Time: <span id="GameTime"></span></p>
+            <canvas width="360px" height="480px" id="DaCanvas" onclick="LeftClickOnBoard(event)" oncontextmenu="RightClickOnBoard(event)" ondblclick="DbClickOnBoard(event)" style="user-select: none; -khtml-user-select: none; -o-user-select: none; -moz-user-select: -moz-none; -webkit-user-select: none;">Y u no canvas??!!</canvas><br><br>
+            <button onclick="SelectMainMenu()">Menu</button>
+            <button onclick="StartPlay()">New Game</button><br>
+            <p id="gsText"></p>
+        </div>
+        <div id="CustomMenu" hidden>
+            <form>
+                <input type="radio" name="m" onclick="SelectMineDifficulty('e');">Easy Mines
+                <input type="radio" name="m" onclick="SelectMineDifficulty('n')">Normal Mines
+                <input type="radio" name="m" onclick="SelectMineDifficulty('h')">Hard Mines<br>
+                <input type="radio" name="m" onclick="SelectMineDifficulty('b')">Brutal Mines
+                <input type="radio" name="m" onclick="SelectMineDifficulty('i')">Insane Mines
+                <input type="radio" name="m" onclick="SelectMineDifficulty('l')">Ludicrous Mines<br><br>
+                <input type="radio" name="b" onclick="SelectBoardDifficulty('e')">Easy Board
+                <input type="radio" name="b" onclick="SelectBoardDifficulty('n')">Normal Board
+                <input type="radio" name="b" onclick="SelectBoardDifficulty('h')">Hard Board<br>
+                <input type="radio" name="b" onclick="SelectBoardDifficulty('b')">Brutal Board
+                <input type="radio" name="b" onclick="SelectBoardDifficulty('i')">Insane Board
+                <input type="radio" name="b" onclick="SelectBoardDifficulty('l')">Ludicrous Board<br><br>
+            </form>
+            <button disabled id="BeginButton" onclick="StartPlay()">Begin</button>
+            <button onclick="SelectMainMenu()">Back</button>
+        </div>
+        <div id="MineAssets" hidden>
+            <img src="mine.png" id="mine_png">
+            <img src="flag.png" id="flag_png">
+        </div>
+        <script src="mines.js"></script>
+    </body>
+</html>
