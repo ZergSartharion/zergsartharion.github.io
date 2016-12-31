@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>Thar be mines in them thar codes!</title>
+        <link rel="icon" href="TestMinesIcon16.png">
     </head>
     <body>
         <div id="MainMenu">
@@ -15,10 +16,18 @@
         <div id="GameBoard" hidden>
             <p>Mines Left: <span id="MinesLeft"></span></p>
             <p>Time: <span id="GameTime"></span></p>
-            <canvas width="360px" height="480px" id="DaCanvas" onclick="LeftClickOnBoard(event)" oncontextmenu="RightClickOnBoard(event)" ondblclick="DbClickOnBoard(event)" style="user-select: none; -khtml-user-select: none; -o-user-select: none; -moz-user-select: -moz-none; -webkit-user-select: none;">Y u no canvas??!!</canvas><br><br>
+            <canvas width="360px" height="480px" id="DaCanvas" onclick="LeftClickOnBoard(event)" oncontextmenu="RightClickOnBoard(event)" ondblclick="DbClickOnBoard(event)" style="user-select: none; -khtml-user-select: none; -o-user-select: none; -moz-user-select: -moz-none; -webkit-user-select: none; border: solid; border-width: 6px; border-color: #B1A89B;">Y u no canvas??!!</canvas><br><br>
             <button onclick="SelectMainMenu()">Menu</button>
-            <button onclick="StartPlay()">New Game</button><br>
+            <button onclick="StartPlay()">New Game</button>
+            <button onclick="ExportBoardImg()">Export</button><br>
             <p id="gsText"></p>
+            <div id="ExportBoard" style="background-color: #D1C8BB; padding: 6px;" hidden>
+                <div style="margin: 0px;">
+                    <button onclick="CloseBoardImage()">Close</button>
+                    <br><br>
+                    <div id="ExportBoardImage"></div>
+                </div>
+            </div>
         </div>
         <div id="CustomMenu" hidden>
             <form>
@@ -37,6 +46,20 @@
             </form>
             <button disabled id="BeginButton" onclick="StartPlay()">Begin</button>
             <button onclick="SelectMainMenu()">Back</button>
+        </div>
+        <div hidden>
+            <audio id="mineAudio0" preload="auto">
+                <source src="testminessound1.mp4" type="audio/mp4">
+            </audio>
+            <audio id="mineAudio1" preload="auto">
+                <source src="testminessound1.mp4" type="audio/mp4">
+            </audio>
+            <audio id="mineAudio2" preload="auto">
+                <source src="testminessound1.mp4" type="audio/mp4">
+            </audio>
+            <audio id="mineAudio3" preload="auto">
+                <source src="testminessound1.mp4" type="audio/mp4">
+            </audio>
         </div>
         <div id="MineAssets" hidden>
             <img src="mine.png" id="mine_png">

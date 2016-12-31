@@ -1,6 +1,6 @@
 //Global constants, change as needed for game generation
-var MineFrequencyEasy = 6.5;
-var MineFrequencyNormal = 5.8;
+var MineFrequencyEasy = 6.0;
+var MineFrequencyNormal = 5.6;
 var MineFrequencyHard = 5.2;
 var MineFrequencyBrutal = 4.8;
 var MineFrequencyInsane = 4.5;
@@ -38,6 +38,20 @@ var AdjacentSquares = [[1, 0], [1, 1], [0, 1],
                         [-1, 0], [-1, -1], [0, -1],
                         [-1, 1], [1, -1]];
 
+var MineSpeeds = [3000, 1500, 750, 250];
+var MineLoopsRequired = [2, 4, 8, 12, 8, 8];
+
+//Audio
+
+var MineAudioTracks = [document.getElementById("mineAudio0"),
+                        document.getElementById("mineAudio1"),
+                        document.getElementById("mineAudio2"),
+                        document.getElementById("mineAudio3")];
+var MineAudioTimer = null;
+var MineAudioIndex = 0;
+var MineAudioSpeedIndex = 0;
+var MineAudioLoopsSinceSpeed = 0;
+
 //Global variables for game state and whatnot
 var DaBoard = null;
 var ctx = document.getElementById("DaCanvas").getContext("2d");
@@ -69,6 +83,7 @@ Format of board element:
 {
     BOOL revealed,
     BOOL flagged,
+    BOOL exploded,
     int count
 }
 
@@ -83,6 +98,10 @@ function MinesBoard() {
     this.GameLoss = false;
     this.BoardGenerated = false;
     
+    //Game Time support
+    this.gameTime = 0;
+    this.gameTimer = null;
+
     this.initBoard = function() {
         this.Dimentions = SelectedDimentions;
         this.MinesLeft = Math.floor((this.Dimentions[0] * this.Dimentions[1]) / SelectedMines);
@@ -93,11 +112,20 @@ function MinesBoard() {
 
         this.Board.length = this.Dimentions[0] * this.Dimentions[1];
         for(var i = 0; i < this.Board.length; i++) {
-            this.Board[i] = { revealed: false, flagged: false, count: 0 };
+            this.Board[i] = { revealed: false, flagged: false, exploded: false, count: 0 };
         }
         this.GameEnd = false;
         this.GameLoss = false;
         this.BoardGenerated = false;
+
+        //Init timer (make sure it starts at 0)
+
+        if(this.gameTimer != null) {
+            clearInterval(this.gameTimer);
+            this.gameTimer = null;
+        }
+        document.getElementById("GameTime").innerHTML = "0";
+        this.gameTime = 0;
     };
 
     this.generateBoard = function(x, y) {
@@ -105,7 +133,7 @@ function MinesBoard() {
 
         this.BoardGenerated = true;
         this.FreeSpacesLeft = this.Dimentions[0] * this.Dimentions[1];
-        for(i = 0; i < Math.floor(((this.Dimentions[0] * this.Dimentions[1]) / SelectedMines)); i++) {
+        for(i = 0; i < Math.floor(((this.Dimentions[0] * this.Dimentions[1]) / SelectedMines)) ; i++) {
             minePos = Math.floor(Math.random() * (this.FreeSpacesLeft - 9));    //Safe space is 3x3
             mineSkipped = 0;
             v = 0;
@@ -113,7 +141,7 @@ function MinesBoard() {
 
             for(j = 0; j < this.Board.length; j++) {
                 if((v < (x - 1)) || (v > (x + 1)) || (h < (y - 1)) || (h > (y + 1))) {  //Not in safe space
-                    if(this.Board[j].count != -1) {     //Is not mine
+                    if(this.Board[j].count != -1) {     //Is not a mine
                         if(mineSkipped == minePos) {
                             this.Board[j].count = -1;
                             this.FreeSpacesLeft--;
@@ -143,7 +171,15 @@ function MinesBoard() {
                 }
             }
         }
-    }
+    };
+
+    this.revealAllMines = function() {
+        for(var i = 0; i < this.Board.length; i++) {
+            if(this.Board[i].count == -1) {
+                this.Board[i].revealed = true;
+            }
+        }
+    };
 
     this.revealSquare = function(x, y) {
         if(((x < this.Dimentions[0]) && (y < this.Dimentions[1])) && ((x >= 0) && (y >= 0))) {  
@@ -152,6 +188,11 @@ function MinesBoard() {
                 if(this.Board[(y * this.Dimentions[0]) + x].count == -1) {  //Boom
                     this.GameEnd = true;
                     this.GameLoss = true;
+
+                    this.Board[(y * this.Dimentions[0]) + x].exploded = true;
+                    this.revealAllMines();
+
+                    mineSound();
                 }
                 else if(this.Board[(y * this.Dimentions[0]) + x].count == 0) {  //Auto-reveal
                     for(var i = 0; i < AdjacentSquares.length; i++) {
@@ -164,6 +205,11 @@ function MinesBoard() {
                     if(this.FreeSpacesLeft == 0) {
                         this.GameEnd = true;
                     }
+                }
+
+                if(this.GameEnd) {
+                    clearInterval(this.gameTimer);
+                    this.gameTimer = null;
                 }
             }
         }
@@ -212,6 +258,12 @@ function MinesBoard() {
             else {
                 if(!this.BoardGenerated && !this.Board[(sy * this.Dimentions[0]) + sx].flagged) {
                     this.generateBoard(sx, sy);
+
+                    //Init timer as well
+                    this.gameTime = 0;
+                    this.gameTimer = setInterval(timerTick, 1000);
+
+                    
                 }
                 if(!this.Board[(sy * this.Dimentions[0]) + sx].revealed) {
                     this.revealSquare(sx, sy);
@@ -272,6 +324,11 @@ function DrawGame() {
                             (i * SquareWidth) + 8, (j * SquareHeight) + (SquareHeight * 0.5) + 6);
                     }
                     else if(DaBoard.Board[(j * DaBoard.Dimentions[0]) + i].count == -1) {   //Mine
+                        if(DaBoard.Board[(j * DaBoard.Dimentions[0]) + i].exploded) {
+                            ctx.fillStyle = "#FFBFBB";
+                            ctx.fillRect((i * SquareWidth) + 1, (j * SquareHeight) + 1, SquareWidth - 2, SquareHeight - 2);
+                        }
+
                         ctx.drawImage(mineImg, i * SquareWidth, j * SquareHeight);
                     }
                 }
@@ -310,6 +367,22 @@ function DrawPaused() {
 
 function DrawCustomSelection() {
 
+}
+
+function timerTick(e) {
+    if(DaBoard != null) {
+        DaBoard.gameTime++;
+        document.getElementById("GameTime").innerHTML = DaBoard.gameTime.toString();
+    }
+}
+
+function mineSound() {
+    MineAudioTracks[MineAudioIndex].play();
+    MineAudioIndex++;
+
+    if(MineAudioIndex >= 4) {
+        MineAudioIndex = 0;
+    }
 }
 
 function RightClickOnBoard(e) {
@@ -354,6 +427,11 @@ function SelectMainMenu() {
         if(DaBoard != null) {
             DaBoard.GameEnd = true;
             DrawScene();
+
+            if(DaBoard.gameTimer != null) {
+                clearInterval(DaBoard.gameTimer);
+                DaBoard.gameTimer = null;
+            }
         }
         GameBoard.hidden = true;
     }
@@ -471,6 +549,28 @@ function SelectBoardDifficulty(difficulty) {
     if(DidSelectMines && DidSelectBoard) {
         BeginButton.disabled = false;
     }
+}
+
+function CloseBoardImage() {
+    document.getElementById("ExportBoard").hidden = true;
+}
+
+function ExportBoardImg() {
+    var tempctx = ctx;
+    var tempcanv = document.createElement("canvas");
+    tempcanv.width = ctxWidth;
+    tempcanv.height = ctxHeight;
+    ctx = tempcanv.getContext("2d");
+
+    DrawGame();
+
+    ctx = tempctx;
+    document.getElementById("ExportBoardImage").innerHTML = "";
+    document.getElementById("ExportBoardImage").appendChild(tempcanv);
+
+    document.getElementById("ExportBoard").hidden = false;
+    document.getElementById("ExportBoard").style.width = ctxWidth.toString() + "px";
+    document.getElementById("ExportBoardImage").style.height = ctxHeight.toString() + "px";
 }
 
 function init() {
