@@ -42,15 +42,7 @@ var MineSpeeds = [3000, 1500, 750, 250];
 var MineLoopsRequired = [2, 4, 8, 12, 8, 8];
 
 //Audio
-
-var MineAudioTracks = [document.getElementById("mineAudio0"),
-                        document.getElementById("mineAudio1"),
-                        document.getElementById("mineAudio2"),
-                        document.getElementById("mineAudio3")];
-var MineAudioTimer = null;
-var MineAudioIndex = 0;
-var MineAudioSpeedIndex = 0;
-var MineAudioLoopsSinceSpeed = 0;
+var MineAudioTracks = [document.getElementById("mineAudio")];
 
 //Global variables for game state and whatnot
 var DaBoard = null;
@@ -76,6 +68,145 @@ var CustomDimentionSelection = EasyDimentions;
 //Image assets
 var mineImg = document.getElementById("mine_png");
 var flagImg = document.getElementById("flag_png");
+
+//Banned Cases (because guessing is neither fun nor interactive)
+//  (For Validation: 0 = Blank, 1 = Mine, 2 = Ignored)
+//  (For Replacement: Value is index of old array to be copied into new array)
+//  (For Anchor: 0 = None, 1 = Left, 2 = Right, 3 = Top, 4 = Bottom,
+//      5 = Top Left, 6 = Top Right, 7 = Bottom Left, 8 = Bottom Right)
+
+var centerBannedCase0 = {
+    Validation: [[1, 2, 2, 1],
+                [2, 1, 0, 2],
+                [2, 0, 1, 2],
+                [1, 2, 2, 1]],
+    Replacement:    [[0, 1, 2, 3],
+                    [4, 6, 5, 7],
+                    [8, 9, 10, 11],
+                    [12, 13, 14, 15]],
+    Anchor: 0,
+    Width: 4,
+    Height: 4
+};
+
+var centerBannedCase1 = {
+    Validation: [[1, 2, 2, 1],
+                [2, 0, 1, 2],
+                [2, 1, 0, 2],
+                [1, 2, 2, 1]],
+    Replacement:    [[0, 1, 2, 3],
+                    [4, 6, 5, 7],
+                    [8, 9, 10, 11],
+                    [12, 13, 14, 15]],
+    Anchor: 0,
+    Width: 4,
+    Height: 4
+};
+
+var topBannedCase0 = {
+    Validation: [[2, 0, 1, 2],
+                [2, 1, 0, 2],
+                [1, 2, 2, 1]],
+    Replacement:    [[0, 1, 2, 3],
+                    [4, 6, 5, 7],
+                    [8, 9, 10, 11]],
+    Anchor: 3,
+    Width: 4,
+    Height: 3
+};
+
+var topBannedCase1 = {
+    Validation: [[2, 1, 0, 2],
+                [2, 0, 1, 2],
+                [1, 2, 2, 1]],
+    Replacement:    [[0, 1, 2, 3],
+                    [4, 6, 5, 7],
+                    [8, 9, 10, 11]],
+    Anchor: 3,
+    Width: 4,
+    Height: 3
+};
+
+var bottomBannedCase0 = {
+    Validation: [[1, 2, 2, 1],
+                [2, 1, 0, 2],
+                [2, 0, 1, 2]],
+    Replacement:    [[0, 1, 2, 3],
+                    [4, 6, 5, 7],
+                    [8, 9, 10, 11]],
+    Anchor: 4,
+    Width: 4,
+    Height: 3
+};
+
+var bottomBannedCase1 = {
+    Validation: [[1, 2, 2, 1],
+                [2, 0, 1, 2],
+                [2, 1, 0, 2]],
+    Replacement:    [[0, 1, 2, 3],
+                    [4, 6, 5, 7],
+                    [8, 9, 10, 11]],
+    Anchor: 4,
+    Width: 4,
+    Height: 3
+};
+
+var leftBannedCase0 = {
+    Validation: [[2, 2, 1],
+                [0, 1, 2],
+                [1, 0, 2],
+                [2, 2, 1]],
+    Replacement:    [[0, 1, 2],
+                    [4, 3, 5],
+                    [6, 7, 8],
+                    [9, 10, 11]],
+    Anchor: 1,
+    Width: 3,
+    Height: 4
+};
+
+var leftBannedCase1 = {
+    Validation: [[2, 2, 1],
+                [1, 0, 2],
+                [0, 1, 2],
+                [2, 2, 1]],
+    Replacement:    [[0, 1, 2],
+                    [4, 3, 5],
+                    [6, 7, 8],
+                    [9, 10, 11]],
+    Anchor: 1,
+    Width: 3,
+    Height: 4
+};
+
+var rightBannedCase0 = {
+    Validation: [[1, 2, 2],
+                [2, 1, 0],
+                [2, 0, 1],
+                [1, 2, 2]],
+    Replacement:    [[0, 1, 2],
+                    [3, 5, 4],
+                    [6, 7, 8],
+                    [9, 10, 11]],
+    Anchor: 2,
+    Width: 3,
+    Height: 4
+};
+
+var rightBannedCase1 = {
+    Validation: [[1, 2, 2],
+                [2, 0, 1],
+                [2, 1, 0],
+                [1, 2, 2]],
+    Replacement:    [[0, 1, 2],
+                    [3, 5, 4],
+                    [6, 7, 8],
+                    [9, 10, 11]],
+    Anchor: 2,
+    Width: 3,
+    Height: 4
+};
+
 
 /*
 
@@ -118,14 +249,7 @@ function MinesBoard() {
         this.GameLoss = false;
         this.BoardGenerated = false;
 
-        //Init timer (make sure it starts at 0)
-
-        if(this.gameTimer != null) {
-            clearInterval(this.gameTimer);
-            this.gameTimer = null;
-        }
-        document.getElementById("GameTime").innerHTML = "0";
-        this.gameTime = 0;
+        this.initTimer();
     };
 
     this.generateBoard = function(x, y) {
@@ -135,40 +259,76 @@ function MinesBoard() {
         this.FreeSpacesLeft = this.Dimentions[0] * this.Dimentions[1];
         for(i = 0; i < Math.floor(((this.Dimentions[0] * this.Dimentions[1]) / SelectedMines)) ; i++) {
             minePos = Math.floor(Math.random() * (this.FreeSpacesLeft - 9));    //Safe space is 3x3
-            mineSkipped = 0;
-            v = 0;
-            h = 0;
+            this.placeMineAtIndex(minePos, x, y);
+        }
+    };
 
-            for(j = 0; j < this.Board.length; j++) {
-                if((v < (x - 1)) || (v > (x + 1)) || (h < (y - 1)) || (h > (y + 1))) {  //Not in safe space
-                    if(this.Board[j].count != -1) {     //Is not a mine
-                        if(mineSkipped == minePos) {
-                            this.Board[j].count = -1;
-                            this.FreeSpacesLeft--;
+    this.initTimer = function() {
+        if(this.gameTimer != null) {
+            clearInterval(this.gameTimer);
+            this.gameTimer = null;
+        }
 
-                            for(k = 0; k < AdjacentSquares.length; k++) {
-                                tx = v + AdjacentSquares[k][0];
-                                ty = h + AdjacentSquares[k][1];
-                                if(((tx < this.Dimentions[0]) && (tx >= 0)) &&
-                                    ((ty < this.Dimentions[1]) && (ty >= 0))) {
-                                    if(this.Board[(ty * this.Dimentions[0]) + tx].count != -1) {
-                                        this.Board[(ty * this.Dimentions[0]) + tx].count++;
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                        else {
-                            mineSkipped++;
-                        }
+        document.getElementById("GameTime").innerHTML = "0";
+        this.gameTime = 0;
+    };
+
+    this.incrementAdjacentCount = function(x, y) {
+        var v, h;
+        for(var i = 0; i < AdjacentSquares.length; i++) {
+            v = x + AdjacentSquares[i][0];
+            h = y + AdjacentSquares[i][1];
+            if(this.pointIsInBoard(v, h)) {
+                if(this.Board[(h * this.Dimentions[0]) + v].count != -1) {
+                    this.Board[(h * this.Dimentions[0]) + v].count++;
+                }
+            }
+        }
+    };
+
+    this.countFromAdjacent = function(x, y) {
+        if(this.Board[(y * this.Dimentions[0]) + x].count == -1) {
+            return;
+        }
+        var v, h;
+        this.Board[(y * this.Dimentions[0]) + x].count = 0;
+
+        for(var i = 0; i < AdjacentSquares.length; i++) {
+            v = x + AdjacentSquares[i][0];
+            h = y + AdjacentSquares[i][1];
+            if(this.pointIsInBoard(v, h)) {
+                if(this.Board[(h * this.Dimentions[0]) + v].count == -1) {
+                    this.Board[(y * this.Dimentions[0]) + x].count++;
+                }
+            }
+        }
+    }
+
+    this.placeMineAtIndex = function(index, sx, sy) {   //safe point
+        var mineSkipped = 0;
+        var v = 0;
+        var h = 0;
+
+        for(var i = 0; i < this.Board.length; i++) {
+            if((v < (sx - 1)) || (v > (sx + 1)) || (h < (sy - 1)) || (h > (sy + 1))) {  //Not in safe space
+                if(this.Board[i].count != -1) {     //Is not a mine
+                    if(mineSkipped == index) {
+                        this.Board[i].count = -1;
+                        this.FreeSpacesLeft--;
+
+                        this.incrementAdjacentCount(v, h);
+                        break;
+                    }
+                    else {
+                        mineSkipped++;
                     }
                 }
+            }
 
-                v++;
-                if(v >= this.Dimentions[0]) {
-                    v = 0;
-                    h++;
-                }
+            v++;
+            if(v >= this.Dimentions[0]) {
+                v = 0;
+                h++;
             }
         }
     };
@@ -181,8 +341,131 @@ function MinesBoard() {
         }
     };
 
+    this.validateAnchor = function(val, x, y) {
+        if(val.Anchor == 0) {
+            return true;
+        }
+
+        if(((val.Anchor == 3) || (val.Anchor == 5) || (val.Anchor == 6)) &&
+                (y != 0)) {   //Top
+            return false;
+        }
+        if(((val.Anchor == 4) || (val.Anchor == 7) || (val.Anchor == 8)) &&
+                ((y + val.Height + 1) != this.Dimentions[1])) {   //Bottom
+            return false;
+        }
+        if(((val.Anchor == 1) || (val.Anchor == 5) || (val.Anchor == 7)) &&
+                (x != 0)) {   //Left
+            return false;
+        }
+        if(((val.Anchor == 2) || (val.Anchor == 6) || (val.Anchor == 8)) &&
+                ((x + val.Width + 1) != this.Dimentions[0])) {   //Right
+            return false;
+        }
+        
+        return true;
+    }
+
+    this.validateCase = function(val, x, y) {
+        if(!this.pointIsInBoard(x + val.Width - 1, y + val.Height - 1)) {
+            return false;
+        }
+        if((val.Anchor != 0) && (!this.validateAnchor(val, x, y))) {
+            return false;
+        }
+
+        var i, j;
+
+        for(i = 0; i < val.Width; i++) {
+            for(j = 0; j < val.Height; j++) {
+                if((val.Validation[j][i] == 0) && (this.Board[((j + y) * 
+                        this.Dimentions[0]) + x + i].count == -1)) {    //Check is not mine
+                    return false;
+                }
+                if((val.Validation[j][i] == 1) && (this.Board[((j + y) *
+                        this.Dimentions[0]) + x + i].count != -1)) {    //Check is mine
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    };
+
+    this.createReplacementMatrix = function(val, x, y) {
+        var ret = [];
+        var i, j, tempx, tempy;
+        ret.length = val.Height;
+
+        for(j = 0; j < val.Height; j++) {
+            ret[j] = [];
+            ret[j].length = val.Width;
+
+            for(i = 0; i < val.Width; i++) {
+                tempy = val.Replacement[j][i] % val.Width;
+                tempx = (val.Replacement[j][i] - tempy) / val.Width;
+                ret[j][i] = this.Board[((tempy + y) * this.Dimentions[0]) + 
+                    tempx + x].count;
+            }
+        }
+
+        return ret;
+    };
+
+    this.recheckAroundCase = function(val, x, y) {
+        var i, j;
+
+        for(i = x - 1; i < (x + val.Width + 1); i++) {
+            for(j = y - 1; j < (y + val.Height + 1) ; j++) {
+                if(this.pointIsInBoard(i, j)) {
+                    this.countFromAdjacent(i, j);
+                }
+            }
+        }
+    }
+
+    this.emplaceMatrix = function(matrix, x, y) {
+        var i, j;
+        for(j = 0; j < matrix.length; j++) {
+            for(i = 0; i < matrix[j].length; i++) {
+                this.Board[((j + y) * this.Dimentions[0]) + i + x].count = matrix[j][i];
+            }
+        }
+    };
+
+    this.banCase = function(val) {
+        var x = 0;
+        var y = 0;
+
+        for(var i = 0; i < this.Board.length; i++) {
+            if(this.pointIsInBoard(x, y) && this.validateCase(val, x, y)) {
+                this.emplaceMatrix(this.createReplacementMatrix(val, x, y), x, y);
+                this.recheckAroundCase(val, x, y);
+            }
+
+            x++;
+            if(x >= this.Dimentions[0]) {
+                x = 0;
+                y++;
+            }
+        }
+    };
+
+    this.banStandardCases = function() {
+        this.banCase(centerBannedCase0);
+        this.banCase(centerBannedCase1);
+        this.banCase(topBannedCase0);
+        this.banCase(topBannedCase1);
+        this.banCase(bottomBannedCase0);
+        this.banCase(bottomBannedCase1);
+        this.banCase(leftBannedCase0);
+        this.banCase(leftBannedCase1);
+        this.banCase(rightBannedCase0);
+        this.banCase(rightBannedCase1);
+    };
+
     this.revealSquare = function(x, y) {
-        if(((x < this.Dimentions[0]) && (y < this.Dimentions[1])) && ((x >= 0) && (y >= 0))) {  
+        if(this.pointIsInBoard(x, y)) {  
             if(!this.Board[(y * this.Dimentions[0]) + x].revealed && !this.Board[(y * this.Dimentions[0]) + x].flagged) {
                 this.Board[(y * this.Dimentions[0]) + x].revealed = true;
                 if(this.Board[(y * this.Dimentions[0]) + x].count == -1) {  //Boom
@@ -216,7 +499,7 @@ function MinesBoard() {
     };
 
     this.validateAdjacent = function(x, y) {
-        if(!(((x < this.Dimentions[0]) && (x >= 0)) && ((y < this.Dimentions[1]) && (y >= 0)))) {
+        if(!this.pointIsInBoard(x, y)) {
             return false;
         }
 
@@ -226,7 +509,7 @@ function MinesBoard() {
         for(var i = 0; i < AdjacentSquares.length; i++) {
             tx = x + AdjacentSquares[i][0];
             ty = y + AdjacentSquares[i][1];
-            if(((tx < this.Dimentions[0]) && (tx >= 0)) && ((ty < this.Dimentions[1]) && (ty >= 0))) {
+            if(this.pointIsInBoard(tx, ty)) {
                 if(this.Board[(ty * this.Dimentions[0]) + tx].flagged) {
                     found++;
                 }
@@ -239,12 +522,20 @@ function MinesBoard() {
         return false;
     };
 
+    this.pointIsInBoard = function(x, y) {
+        if(!(((x < this.Dimentions[0]) && (x >= 0)) &&
+            ((y < this.Dimentions[1]) && (y >= 0)))) {
+            return false;
+        }
+        return true;
+    }
+
     this.mouseEvent = function(x, y, isFlag, isDbclick) {
         var sx = Math.floor(x / SquareWidth);
         var sy = Math.floor(y / SquareHeight);
 
         //Is in bounds
-        if((((sx < this.Dimentions[0]) && (sy < this.Dimentions[1])) && ((sx >= 0)) & (sy >= 0)) && !this.GameEnd) {
+        if(this.pointIsInBoard(sx, sy) && !this.GameEnd) {
             if(isFlag && !this.Board[(sy * this.Dimentions[0]) + sx].revealed) {
                 if(this.Board[(sy * this.Dimentions[0]) + sx].flagged) {
                     this.Board[(sy * this.Dimentions[0]) + sx].flagged = false;
@@ -258,12 +549,11 @@ function MinesBoard() {
             else {
                 if(!this.BoardGenerated && !this.Board[(sy * this.Dimentions[0]) + sx].flagged) {
                     this.generateBoard(sx, sy);
+                    this.banStandardCases();
 
                     //Init timer as well
                     this.gameTime = 0;
                     this.gameTimer = setInterval(timerTick, 1000);
-
-                    
                 }
                 if(!this.Board[(sy * this.Dimentions[0]) + sx].revealed) {
                     this.revealSquare(sx, sy);
@@ -377,12 +667,7 @@ function timerTick(e) {
 }
 
 function mineSound() {
-    MineAudioTracks[MineAudioIndex].play();
-    MineAudioIndex++;
-
-    if(MineAudioIndex >= 4) {
-        MineAudioIndex = 0;
-    }
+    MineAudioTracks[0].play();
 }
 
 function RightClickOnBoard(e) {
