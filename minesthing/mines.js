@@ -351,7 +351,7 @@ function MinesBoard() {
             return false;
         }
         if(((val.Anchor == 4) || (val.Anchor == 7) || (val.Anchor == 8)) &&
-                ((y + val.Height + 1) != this.Dimentions[1])) {   //Bottom
+                ((y + val.Height) != this.Dimentions[1])) {   //Bottom
             return false;
         }
         if(((val.Anchor == 1) || (val.Anchor == 5) || (val.Anchor == 7)) &&
@@ -359,7 +359,7 @@ function MinesBoard() {
             return false;
         }
         if(((val.Anchor == 2) || (val.Anchor == 6) || (val.Anchor == 8)) &&
-                ((x + val.Width + 1) != this.Dimentions[0])) {   //Right
+                ((x + val.Width) != this.Dimentions[0])) {   //Right
             return false;
         }
         
@@ -402,8 +402,8 @@ function MinesBoard() {
             ret[j].length = val.Width;
 
             for(i = 0; i < val.Width; i++) {
-                tempy = val.Replacement[j][i] % val.Width;
-                tempx = (val.Replacement[j][i] - tempy) / val.Width;
+                tempx = val.Replacement[j][i] % val.Width;
+                tempy = (val.Replacement[j][i] - tempx) / val.Width;
                 ret[j][i] = this.Board[((tempy + y) * this.Dimentions[0]) + 
                     tempx + x].count;
             }
