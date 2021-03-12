@@ -1,1 +1,7 @@
 minesthing/minescripttest.js
+**/JCOptimization/Debug
+**/JCOptimization/Release
+**/JCOptimization/x64
+**/JCOptimization/.vs
+**/JCOptimization/*.vcxproj.filters
+**/JCOptimization/*.vcxproj.user
