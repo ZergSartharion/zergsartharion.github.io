@@ -20,6 +20,12 @@ tr:not(:last-child) td {
 
 .RecipeTitle {
     color: #D0C800;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.RecipeDifficulty {
+    margin-top: 10px;
 }
 
 .Orange {
@@ -40,4 +46,5 @@ tr:not(:last-child) td {
 
 .RecipeWeight {
     color: #A0A0A8;
+    margin-bottom: 10px;
 }
