@@ -1,3 +1,7 @@
+var MatCount = {};
+var MatWeight = {};
+var MatOrder = [];
+
 var LoadSimDataToTable = function() {
     var table = document.createElement("table");
     
@@ -5,6 +9,7 @@ var LoadSimDataToTable = function() {
         LoadSimDataRow(JCSimData.rows[i], table, i);
     }
     
+    DisplayTotalMats(table);
     document.body.append(table);
 };
 
@@ -21,6 +26,8 @@ var LoadSimDataRow = function(row, table, num) {
     }
     
     tr.append(skillCol);
+    
+    SaveMatCount(row.col_main, num * 5);
     
     LoadSimDataCol([row.col_main], tr);
     LoadSimDataCol([row.col_b], tr);
@@ -70,6 +77,63 @@ var GenRecipeText = function(recipe) {
     recipeWeightText += "</p>"
     
     return recipeWeightText + recipeTitle + recipeDifficulty;
+};
+
+var SaveMatCount = function(recipe, skill) {
+    var mult = 5.0;
+    
+    if(recipe.green <= skill) {
+        mult = 100.0;
+    }
+    else if(recipe.yellow <= skill) {
+        mult = 15.0;
+    }
+    
+    for(var i = 0; i < recipe.mats.length; i++) {
+        if(!recipe.mats[i].num) {
+            continue;
+        }
+        
+        if(!MatCount[recipe.mats[i].name]) {
+            MatCount[recipe.mats[i].name] = recipe.mats[i].num * mult;
+            MatWeight[recipe.mats[i].name] = recipe.mats[i].weight * recipe.mats[i].num * mult;
+            MatOrder.push(recipe.mats[i].name);
+        }
+        else {
+            MatCount[recipe.mats[i].name] += recipe.mats[i].num * mult;
+            MatWeight[recipe.mats[i].name] += recipe.mats[i].weight * recipe.mats[i].num * mult;
+        }
+    }
+};
+
+var DisplayTotalMats = function(table) {
+    var tr = document.createElement("tr");
+    var headerTd = document.createElement("td");
+    var matTd = document.createElement("td");
+    var weightTd = document.createElement("td");
+    var par;
+    
+    headerTd.innerHTML = "<p class='SkillCol'>Totals</p>";
+    tr.append(headerTd);
+    
+    var totalWeight = 0.0;
+    
+    for(var i = 0; i < MatOrder.length; i++) {
+        par = document.createElement("p");
+        par.innerHTML = "<span class='RecipeTitle'>[" + MatOrder[i] + "]</span> x" + MatCount[MatOrder[i]];
+        
+        par.title = "Weight/unit: " + (MatWeight[MatOrder[i]] / MatCount[MatOrder[i]]) + "\nTotal weight: " + MatWeight[MatOrder[i]];
+        totalWeight += MatWeight[MatOrder[i]];
+        
+        matTd.append(par);
+    }
+    
+    tr.append(matTd);
+    
+    weightTd.innerHTML = "<p>Total weight: " + totalWeight.toFixed(2) + "</p>";
+    tr.append(weightTd);
+    
+    table.append(tr);
 };
 
 window.onload = function(e) {
